@@ -46,8 +46,11 @@ export const createUsersTable = async (connection) => {
 
           user_type ENUM('user', 'admin', 'superadmin') DEFAULT 'user',
 
-          createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-          updatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+          otp VARCHAR(6),                   
+          is_verified BOOLEAN DEFAULT false,  
+
+          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+          updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
         );
       `);
 

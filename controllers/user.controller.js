@@ -5,10 +5,17 @@ import {
   createUser,
   getUserById,
   updateUserById,
-  getAllUsers
-} from "../models/user.model.js";
+  getAllUsers,
+  saveUserOtp,
+  verifyUserOtp,
+  isUserVerified,
+  getOtpByEmail,
+  updateUserPassword
+} from "../services/user.service.js";
 import jwt from 'jsonwebtoken';
 import fs from 'fs';
+import { sendOtpEmail, sendPasswordResetEmail } from "../utils/sendEmail.js";
+
 
 
 export const registerUser = async (req, res) => {
@@ -34,11 +41,11 @@ export const registerUser = async (req, res) => {
     const existingPhone = await getUserByPhone(phone);
 
     if (existingEmail) {
-      return res.status(409).json({ message: 'Email is already registered' });
+      return res.status(409).json({success:false, message: 'Email is already registered' });
     }
 
     if (existingPhone) {
-      return res.status(409).json({ message: 'Phone number is already registered' });
+      return res.status(409).json({success:false, message: 'Phone number is already registered' });
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
@@ -55,12 +62,13 @@ export const registerUser = async (req, res) => {
     });
 
     if (!userId) {
-      return res.status(500).json({ message: 'Error creating user' });
+      return res.status(500).json({success:false, message: 'Error creating user' });
     }
+
     return res.status(201).json({
       success: true,
-      message: 'User registered successfully',
-      userId,
+      message: 'Account created successfully. Please verify your email.',
+      userId
     });
 
   } catch (error) {
@@ -70,8 +78,82 @@ export const registerUser = async (req, res) => {
   }
 };
 
+export const generateOtpForVerification  = async (req, res) => {
+  try {
+    
+    const { email } = req.body;
 
-export const loginUSer = async (req, res) => {
+    if (!email) {
+      return res.status(400).json({success:false, message: 'Email is required' });
+    }
+
+    const user = await getUserByEmail(email);
+    if(!user){
+      return res.status(404).json({success:false, message:'Email not found . Please register first' });
+    }
+
+    const verified = await isUserVerified(email);
+    if(verified){
+      return res.status(409).json({success:false, message:'Account already verified please Login'});
+    }
+
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    await saveUserOtp(email, otp);
+    await sendOtpEmail(email, otp);
+
+    return res.status(200).json({
+      success: true,
+      message: 'OTP sent to your email. Please check your inbox.',
+    })
+
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: "Server error",
+      error: error.message,
+    });
+  }
+};
+
+export const verifyOtpAndActivateUser  = async (req, res) => {
+  try {
+    
+    const { email, otp } = req.body;
+
+    if (!email || !otp) {
+      return res.status(400).json({success:false, message: 'Email and OTP are required' });
+    }
+
+    const user = await getUserByEmail(email);
+    if(!user){
+      return res.status(404).json({success:false, message:'Email not found . Please register first' });
+    }
+
+    const verified = await isUserVerified(email);
+    if(verified){
+      return res.status(409).json({success:false, message:'Account already verified please Login'});
+    }
+
+    const isOtpValid = await verifyUserOtp(email, otp);
+    if(!isOtpValid){
+      return res.status(401).json({success:false, message: 'Invalid or Expired OTP'});
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: 'Account verified successfully. You can now login.',
+    });
+
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: "Server error",
+      error: error.message,
+    });
+  }
+};
+
+export const loginUser = async (req, res) => {
   const { email, password } = req.body;
 
   // 1. Validate input
@@ -80,20 +162,31 @@ export const loginUSer = async (req, res) => {
   }
 
   try {
-     // 2. Get user from DB   
+     // 2. Check if user exists
     const user = await getUserByEmail(email);
 
     if (!user) {
-      return res.status(401).json({success:false, message: 'Invalid email or password' });
+      return res.status(401).json({success:false, message: 'Invalid credentials' });
     }
 
-     // 3. Compare password
+    // 3. Check if user is verified
+    const verified = await isUserVerified(email);
+    if (!verified) {
+     return res.status(403).json({
+       success: false,
+       message: "Account is not verified. Please verify your account.",
+     });
+   }
+
+     // 4. Compare password
      const isMatch = await bcrypt.compare(password, user.password);
      if (!isMatch) {
-       return res.status(401).json({success:false, message: 'Invalid email or password' });
+       return res.status(401).json({success:false, message: 'Invalid credentials' });
      }
 
-      // 4. Generate JWT
+     
+
+      // 5. Generate JWT
     const token = jwt.sign(
       {
         userId: user.id,
@@ -101,7 +194,7 @@ export const loginUSer = async (req, res) => {
         userType: user.user_type,
       },
       process.env.JWT_SECRET,
-      { expiresIn: '24h' }
+      { expiresIn: '7d' }
     );
 
      // 5. Return response
@@ -113,7 +206,6 @@ export const loginUSer = async (req, res) => {
         id: user.id,
         fullName: user.full_name,
         email: user.email,
-        userType: user.user_type,
       },
     });
 
@@ -123,6 +215,89 @@ export const loginUSer = async (req, res) => {
   }
 };
 
+export const forgotPassword =  async (req, res) => {
+  try {
+    const {email} = req.body;
+
+    if(!email){
+      return res.status(400).json({success:false, message:'Email is required'});
+    }
+
+    const user = await getUserByEmail(email);
+    if(!user){
+      return res.status(404).json({success:false, message:'Email not found . Please register first'});
+    }
+
+    const isVerified = await isUserVerified(email);
+    if(!isVerified){
+      return res.status(403).json({success:false, message:'Account is not verified. Please verify your account'});
+    }
+
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+
+    await saveUserOtp(email, otp);
+    await sendPasswordResetEmail(email, otp);
+
+    return res.status(200).json({
+      success:true,
+      message:'OTP sent to your email for password reset',
+    });
+
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: "Server error",
+      error: error.message,
+    });
+  }
+};
+
+export const resetPasswordWithOtp = async (req, res) => {
+    try {
+      const { email, otp, password, confirmPassword } = req.body;
+
+      // 1. Check for required fields
+    if (!email || !otp || !password || !confirmPassword) {
+      return res.status(400).json({ message: "All fields are required." });
+    }
+
+    // 2. Check if email is valid
+    const emailExists = await getUserByEmail(email);
+    if (!emailExists) {
+      return res.status(404).json({ message: "Email not found." });
+    }
+
+    // 2. Check if password matches confirmPassword
+    if (password !== confirmPassword) {
+      return res.status(400).json({ message: "Passwords do not match." });
+    }
+
+     // 3. Get stored OTP from DB
+     const user = await getOtpByEmail(email);
+     if (!user || !user.otp) {
+       return res.status(400).json({ message: "Invalid or expired OTP." });
+     }
+
+     // 4. Compare OTPs
+    if (user.otp !== otp) {
+      return res.status(400).json({ message: "Incorrect OTP." });
+    }
+
+    // Hash new password
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    // Update user password and clear OTP
+    await updateUserPassword(email, hashedPassword);
+
+    // Respond success
+    return res.status(200).json({ message: "Password reset successful." });
+
+
+    } catch (error) {
+      return res.status(500).json({success:true, message: "Something went wrong.", error:error.message });
+    }
+};
+ 
 export const updateUser = async (req, res) => {
   const userId = req.params.id;
 
