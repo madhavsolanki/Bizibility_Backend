@@ -1,0 +1,38 @@
+Authentication Done
+
+User Management APIS - updateUser, getUserInfo, getAllUsersInfo
+
+Plan Models - planId, planType (Monthly/ Yearly) , planTitle, price, planFeatures. created and Updated at,
+
+listingModel - listingTitle, bussinessTagline, Addressurl, custom address, latitude, longitude, city, phone, website,
+category, Delivery (0 / 1), Takeout (0 / 1) 
+
+AirConditioning (0 / 1)
+Dogs Allowed (0 / 1)
+24 Hours Open ( 0 / 1)
+Wheelchair Accessible ( 0 / 1)
+
+Gender (Enum [MALE, FEMALE])
+
+AcceptPayments
+creditCards(0 / 1) , bankTransfer(0 / 1), Mobile Payments (0 / 1)
+
+priceRange (String),
+priceFrom (Number), PriceTo (Number)
+
+// Bussiners Hours Think About that
+
+
+socialMedia (String) , url: String
+
+FAQ (Array of object contains Question and asnwers)
+
+Description (String)
+
+Tags or keywords (String)
+
+Bussiness Video Url
+
+Images (Array of Images)
+Bussiness Logo (Single Images)
+

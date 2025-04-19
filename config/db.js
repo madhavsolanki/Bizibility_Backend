@@ -1,6 +1,6 @@
 import mysql from 'mysql2/promise';
 import dotenv from 'dotenv';
-import { createUsersTable } from './table.js';
+import { initializeTables } from './table.js';
 
 dotenv.config();
 
@@ -21,17 +21,13 @@ const initDB = async () => {
     console.log(`✅ Connected to MySQL database DB_NAME: ${process.env.DB_NAME}`);
     
 
-    // Tables
-    createUsersTable(connection);
+       // Call centralized function
+       await initializeTables(connection);
      
 
   } catch (error) {
     console.error('❌ Database connection failed:', error.message);
   }
 }
-
-
-
-
 
 export { initDB, connection }

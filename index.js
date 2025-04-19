@@ -3,6 +3,8 @@ import dotenv from 'dotenv';
 import cors from 'cors';
 import {initDB} from "./config/db.js";
 import userRoutes from './routes/user.routes.js';
+import planRoutes from './routes/plan.routes.js';
+import enquiryRoutes from "./routes/enquiry.routes.js";
 
 dotenv.config();
 
@@ -18,6 +20,8 @@ app.use(express.urlencoded({extended: true}));
 
 
 app.use('/bizivility/users', userRoutes);
+app.use('/bizivility/plans', planRoutes);
+app.use('/bizivility/enquiry', enquiryRoutes);
 
 const PORT = process.env.PORT || 5500;
 

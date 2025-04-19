@@ -1,5 +1,4 @@
 import { connection } from "../config/db.js";
-import crypto from "crypto";
 
 export const getUserByEmail = async (email) => {
   const [rows] = await connection.execute(
@@ -135,7 +134,6 @@ export const isUserVerified = async (email) => {
   if (rows.length === 0) return null; // user not found
   return rows[0].is_verified === 1;
 };
-
 
 export const getOtpByEmail = async (email) => {
   const [rows] = await connection.execute(
