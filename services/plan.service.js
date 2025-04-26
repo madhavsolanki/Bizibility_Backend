@@ -46,7 +46,6 @@ export const getAllPlans = async () => {
   });
 };
 
-
 // Get a single plan by ID
 export const getPlanById = async (id) => {
   const [rows] = await connection.execute("SELECT * FROM plans WHERE id = ?", [id]);
@@ -66,7 +65,6 @@ export const getPlanById = async (id) => {
 
   return plan;
 };
-
 
 // Update plan by ID with fallback to existing data
 export const updatePlan = async (id, updateData) => {
@@ -110,14 +108,11 @@ export const updatePlan = async (id, updateData) => {
   return true;
 };
 
-
-
 // Delete plan by ID
 export const deletePlan = async (id) => {
   await connection.execute("DELETE FROM plans WHERE id =?", [id]);
   return true;
 };
-
 
 // Get raw plan data for internal usage
 export const getRawPlanById = async (id) => {
@@ -125,9 +120,7 @@ export const getRawPlanById = async (id) => {
   return rows[0] || null;
 };
 
-
 // services/plan.service.js
-
 export const getPlansByDuration = async (duration) => {
   const [rows] = await connection.execute(
     `SELECT * FROM plans WHERE duration = ? ORDER BY created_at DESC`,
