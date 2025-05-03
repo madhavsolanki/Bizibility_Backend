@@ -6,6 +6,7 @@ import userRoutes from './routes/user.routes.js';
 import planRoutes from './routes/plan.routes.js';
 import enquiryRoutes from "./routes/enquiry.routes.js";
 import listingRoutes from "./routes/listing.routes.js";
+import carrerRoutes from "./routes/carrer.routes.js";
 
 dotenv.config();
 
@@ -24,6 +25,7 @@ app.use('/bizivility/users', userRoutes);
 app.use('/bizivility/plans', planRoutes);
 app.use('/bizivility/enquiry', enquiryRoutes);
 app.use('/bizivility/listing', listingRoutes);
+app.use('/bizivility/carrers', carrerRoutes);
 
 const PORT = process.env.PORT || 5500;
 

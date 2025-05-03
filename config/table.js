@@ -2,13 +2,16 @@
 export const createUsersTable = async (connection) => {
   try {
     // Step 1: Check if table exists
-    const [rows] = await connection.execute(`
+    const [rows] = await connection.execute(
+      `
       SELECT COUNT(*) AS count
       FROM information_schema.tables 
       WHERE table_schema = ? 
       AND table_name = 'Users'
       LIMIT 1
-    `, [process.env.DB_NAME]);
+    `,
+      [process.env.DB_NAME]
+    );
 
     const tableExists = rows[0].count > 0;
 
@@ -23,7 +26,7 @@ export const createUsersTable = async (connection) => {
 
           first_name VARCHAR(100) NULL,
           last_name VARCHAR(100) NULL,
-          full_name VARCHAR(100) NOT NULL,  
+          full_name VARCHAR(255) NULL,
 
           email VARCHAR(150) NOT NULL UNIQUE,
           password VARCHAR(150) NOT NULL,
@@ -60,7 +63,6 @@ export const createUsersTable = async (connection) => {
     console.error("❌ Error creating Users table:", error.message);
   }
 };
-
 
 // PLANS TABLE
 export const createPlansTable = async (connection) => {
@@ -99,7 +101,7 @@ export const createEnquiryTable = async (connection) => {
     );
   `);
   console.log("✅ Enquiry table ensured.");
-};  
+};
 
 // LISTINGS TABLE
 export const createListingsTable = async (connection) => {
@@ -140,8 +142,25 @@ export const createListingsTable = async (connection) => {
   console.log("✅ Listings table ensured.");
 };
 
-
-
+export const createCarrersTable = async (connection) => {
+  await connection.execute(`
+    CREATE TABLE IF NOT EXISTS carrers (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        user_id INT,
+        title VARCHAR(255) NOT NULL,
+        skills TEXT NOT NULL,
+        experience VARCHAR(100) NOT NULL,
+        description TEXT NOT NULL,
+        location VARCHAR(255) NOT NULL,
+        employment_type VARCHAR(50),
+        salary_range VARCHAR(100),
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        is_active BOOLEAN DEFAULT TRUE
+    );
+  `);
+  console.log("✅ Carreers table ensured.");
+};
 
 // Centralized init function
 export const initializeTables = async (connection) => {
@@ -149,6 +168,7 @@ export const initializeTables = async (connection) => {
   await createPlansTable(connection);
   await createEnquiryTable(connection);
   await createListingsTable(connection);
+  await createCarrersTable(connection);
 
   console.log("✅ All tables initialized.");
 };
