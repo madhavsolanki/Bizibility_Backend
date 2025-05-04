@@ -162,6 +162,39 @@ export const createCarrersTable = async (connection) => {
   console.log("✅ Carreers table ensured.");
 };
 
+
+export const createApplicantsTable = async (connection) => {
+  await connection.execute(`
+    CREATE TABLE IF NOT EXISTS applicants (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        user_id INT NOT NULL,                             
+        job_id INT NOT NULL,                              
+
+        first_name VARCHAR(255) NOT NULL,
+        last_name VARCHAR(255) NOT NULL,
+        email VARCHAR(255) NOT NULL,
+        contact_number VARCHAR(20) NOT NULL,
+
+        resume VARCHAR(500) NOT NULL,                     
+        cover_letter TEXT NOT NULL,                       
+
+        linkedin_profile VARCHAR(500),                    
+        portfolio_website VARCHAR(500),                  
+
+        experience VARCHAR(100) NOT NULL,                 
+        info_source VARCHAR(100) NOT NULL,                
+
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+
+        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+        FOREIGN KEY (job_id) REFERENCES carrers(id) ON DELETE CASCADE
+    );
+  `);
+  console.log("✅ Applicants table ensured.");
+};
+
+
 // Centralized init function
 export const initializeTables = async (connection) => {
   await createUsersTable(connection);
@@ -169,6 +202,7 @@ export const initializeTables = async (connection) => {
   await createEnquiryTable(connection);
   await createListingsTable(connection);
   await createCarrersTable(connection);
+  await createApplicantsTable(connection);
 
   console.log("✅ All tables initialized.");
 };
